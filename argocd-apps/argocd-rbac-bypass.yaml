@@ -1,0 +1,41 @@
+apiVersion: v1
+items:
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"name":"argocd-server-super-admin"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"cluster-admin"},"subjects":[{"kind":"ServiceAccount","name":"argocd-server","namespace":"argocd"}]}
+    creationTimestamp: "2026-10-07T22:14:17Z"
+    name: argocd-server-super-admin
+    resourceVersion: "2058642"
+    uid: fa24d87a-5f5c-4218-a326-8ad3d6959a75
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+  subjects:
+  - kind: ServiceAccount
+    name: argocd-server
+    namespace: argocd
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"ClusterRoleBinding","metadata":{"annotations":{},"name":"argocd-controller-super-admin"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"ClusterRole","name":"cluster-admin"},"subjects":[{"kind":"ServiceAccount","name":"argocd-application-controller","namespace":"argocd"}]}
+    creationTimestamp: "2026-10-07T22:14:17Z"
+    name: argocd-controller-super-admin
+    resourceVersion: "2058643"
+    uid: cc79cc66-2e35-4048-a1ee-7c7f93cfa70b
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+  subjects:
+  - kind: ServiceAccount
+    name: argocd-application-controller
+    namespace: argocd
+kind: List
+metadata:
+  resourceVersion: ""
