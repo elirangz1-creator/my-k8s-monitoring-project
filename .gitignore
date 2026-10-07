@@ -1,0 +1,8 @@
+# Ignore local Docker persistent volume data
+.docker/
+prometheus-data/
+grafana-data/
+
+# Ignore OS specific temporary files
+.DS_Store
+Thumbs.db

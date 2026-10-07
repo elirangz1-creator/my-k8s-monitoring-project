@@ -1,0 +1,25 @@
+# ======================================================================================
+# GLOBAL VALUES AND CONFIGURATION VARIABLES FOR THE PASSWORD API CHART
+# ======================================================================================
+
+# Number of application instances (Pods) to run simultaneously for high availability
+replicaCount: 1
+
+image:
+  # The Docker registry path where your application container image is stored.
+  # We point to MicroK8s built-in local registry which runs by default on port 32000.
+  repository: localhost:32000/password-api
+  
+  # Image pull policy: IfNotPresent means K8s will use the local image if it already exists on the node
+  pullPolicy: IfNotPresent
+  
+  # SPECIFIC VERSION TAG: Changed from "latest" to "1.0.0" to match the active release version.
+  # Using hardcoded version tags ensures deployment predictability and allows ArgoCD to detect updates.
+  tag: "1.0.0"
+
+service:
+  # ClusterIP means the service gets an internal IP accessible only from inside the Kubernetes cluster.
+  type: ClusterIP
+  
+  # The port number exposed by the Kubernetes Service architecture
+  port: 5000

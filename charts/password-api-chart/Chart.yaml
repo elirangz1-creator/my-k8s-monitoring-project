@@ -1,0 +1,10 @@
+apiVersion: v2
+name: password-api
+description: Helm chart for the Python Password Flask API application
+type: application
+
+# This is the chart version. Change this version number when you modify the chart architecture.
+version: 1.0.0
+
+# This is the version number of the actual application (the Python code/Docker image version).
+appVersion: "1.0.0"

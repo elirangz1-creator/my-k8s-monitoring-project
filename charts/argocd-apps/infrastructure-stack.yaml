@@ -1,0 +1,27 @@
+# ======================================================================================
+# ARGOCD APPLICATION MANIFEST: CUSTOM PYTHON PASSWORD FLASK API
+# ======================================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: password-api-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # IMPORTANT: Update this URL to point exactly to your active remote repository path
+    repoURL: 'https://github.com'
+    targetRevision: HEAD
+    path: charts/password-api-chart # Points ArgoCD inside the local Helm Chart layout
+  
+  destination:
+    server: 'https://default.svc'
+    namespace: password-api-prod # Deploys application layers into a production namespace
+  
+  syncPolicy:
+    createNamespace: true # Creates the production destination runtime namespace automatically
+    automated:
+      prune: true
+      selfHeal: true
