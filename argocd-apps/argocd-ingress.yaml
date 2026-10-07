@@ -7,11 +7,14 @@ metadata:
   name: argocd-server-ingress
   namespace: argocd
   annotations:
-    # TRAEFIK SPECIFIC: Tells the Traefik engine to communicate with the backend via secure HTTPS
+    # Tells Traefik to accept the secure backend port
     traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
     traefik.ingress.kubernetes.io/router.tls: "true"
+    
+    # 🚨 THE FIX: Instructs Traefik to skip internal SSL verification for the backend service pod
+    traefik.ingress.kubernetes.io/service.serversstransport: "insecure@internal"
 spec:
-  # Traefik in MicroK8s automatically picks up rules marked with the default ingress class
+  ingressClassName: public
   rules:
   - host: argocd.local
     http:
@@ -23,3 +26,4 @@ spec:
             name: argocd-server
             port:
               number: 443
+     
