@@ -1,0 +1,68 @@
+# ======================================================================================
+# ARGOCD APPLICATION MANIFEST: INFRASTRUCTURE MONITORING STACK (PROMETHEUS & GRAFANA)
+# ======================================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # CORRECTED NAME: Changed to unique infrastructure identifier to prevent overrides
+  name: kube-prometheus-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # OFFICIAL COMMUNITY CHART: Points directly to the official Helm catalog source
+    repoURL: 'https://github.io'
+    chart: kube-prometheus-stack
+    targetRevision: 65.x.x # Targets the stable product release generation
+    helm:
+      values: |
+        alertmanager:
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              receiver: 'slack-notifications'
+              group_by: ['alertname']
+              group_wait: 10s
+              group_interval: 5m
+              repeat_interval: 3h
+            receivers:
+            - name: 'slack-notifications'
+              slack_configs:
+              - channel: '#alerts-devops'
+                # YOUR ACTIVE WEBHOOK: Integrated from your original workspace properties
+                api_url: 'https://slack.com'
+                text: "🚨 *Alert:* {{"{{ .CommonAnnotations.summary }}"}}\n📌 *Description:* {{"{{ .CommonAnnotations.description }}"}}\n🔥 *Severity:* {{"{{ .CommonLabels.severity }}"}}"
+                send_resolved: true
+        
+        # MONITORING RULES: Automatically injects your custom host hardware failure metrics
+        additionalPrometheusRulesMap:
+          host-rules:
+            groups:
+              - name: host_alerts
+                rules:
+                  - alert: HostHighCPUUsage
+                    expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+                    for: 5m
+                    labels:
+                      severity: warning
+                    annotations:
+                      summary: "🚨 High CPU utilization detected on the host machine"
+                      description: "The system CPU load has sustained levels above 85% for more than 5 minutes."
+        
+        grafana:
+          adminPassword: "admin" # Matches your native dashboard local security token
+  
+  destination:
+    # CORRECTED CLUSTER URL: Points directly to the active local cluster runtime API
+    server: 'https://default.svc'
+    namespace: monitoring # Deploys isolated from core microservices
+  
+  syncPolicy:
+    createNamespace: true
+    automated:
+      prune: true
+      selfHeal: true
+
