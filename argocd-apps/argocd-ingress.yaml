@@ -1,0 +1,28 @@
+# ======================================================================================
+# KUBERNETES INGRESS MANIFEST: NATIVE DOMAIN ROUTING FOR ARGOCD UI
+# ======================================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+  annotations:
+    # Tells the Nginx Ingress Controller to route traffic via secure SSL passthrough/redirects
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  # Links this rule explicitly to the active native MicroK8s Ingress Controller
+  ingressClassName: public
+  rules:
+  # The local domain address you will type in your browser to access the UI safely
+  - host: argocd.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            # Connects directly to the stable network service we inspected earlier
+            name: argocd-server
+            port:
+              number: 443
