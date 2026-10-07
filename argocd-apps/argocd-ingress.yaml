@@ -1,5 +1,5 @@
 # ======================================================================================
-# KUBERNETES INGRESS MANIFEST: NATIVE DOMAIN ROUTING FOR ARGOCD UI
+# KUBERNETES INGRESS MANIFEST: NATIVE TRAEFIK DOMAIN ROUTING FOR ARGOCD UI
 # ======================================================================================
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -7,14 +7,12 @@ metadata:
   name: argocd-server-ingress
   namespace: argocd
   annotations:
-    # Tells the Nginx Ingress Controller to route traffic via secure SSL passthrough/redirects
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # TRAEFIK SPECIFIC: Tells the Traefik engine to communicate with the backend via secure HTTPS
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  # Links this rule explicitly to the active native MicroK8s Ingress Controller
-  ingressClassName: public
+  # Traefik in MicroK8s automatically picks up rules marked with the default ingress class
   rules:
-  # The local domain address you will type in your browser to access the UI safely
   - host: argocd.local
     http:
       paths:
@@ -22,7 +20,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            # Connects directly to the stable network service we inspected earlier
             name: argocd-server
             port:
               number: 443
