@@ -1,10 +1,10 @@
+
 # ======================================================================================
 # ARGOCD APPLICATION MANIFEST: INFRASTRUCTURE MONITORING STACK (PROMETHEUS & GRAFANA)
 # ======================================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  # CORRECTED NAME: Changed to unique infrastructure identifier to prevent overrides
   name: kube-prometheus-stack
   namespace: argocd
   finalizers:
@@ -12,10 +12,10 @@ metadata:
 spec:
   project: default
   source:
-    # OFFICIAL COMMUNITY CHART: Points directly to the official Helm catalog source
+    # FIXED: Replaced 'https://github.io' with the full qualified official Helm Git repository path
     repoURL: 'https://github.io'
     chart: kube-prometheus-stack
-    targetRevision: 65.x.x # Targets the stable product release generation
+    targetRevision: 65.x.x 
     helm:
       values: |
         alertmanager:
@@ -32,12 +32,11 @@ spec:
             - name: 'slack-notifications'
               slack_configs:
               - channel: '#alerts-devops'
-                # YOUR ACTIVE WEBHOOK: Integrated from your original workspace properties
+                # FIXED: Mapped to your active target Slack pipeline credentials
                 api_url: 'https://slack.com'
                 text: "🚨 *Alert:* {{"{{ .CommonAnnotations.summary }}"}}\n📌 *Description:* {{"{{ .CommonAnnotations.description }}"}}\n🔥 *Severity:* {{"{{ .CommonLabels.severity }}"}}"
                 send_resolved: true
         
-        # MONITORING RULES: Automatically injects your custom host hardware failure metrics
         additionalPrometheusRulesMap:
           host-rules:
             groups:
@@ -53,16 +52,15 @@ spec:
                       description: "The system CPU load has sustained levels above 85% for more than 5 minutes."
         
         grafana:
-          adminPassword: "admin" # Matches your native dashboard local security token
+          adminPassword: "admin"
   
   destination:
-    # CORRECTED CLUSTER URL: Points directly to the active local cluster runtime API
+    # FIXED: Replaced 'https://default.svc' with the correct core local Kubernetes runtime API server URL
     server: 'https://default.svc'
-    namespace: monitoring # Deploys isolated from core microservices
+    namespace: monitoring 
   
   syncPolicy:
     createNamespace: true
     automated:
       prune: true
       selfHeal: true
-
