@@ -16,7 +16,7 @@ spec:
     # ----------------------------------------------------------------------------------
     repoURL: 'https://github.com/elirangz1-creator/my-k8s-monitoring-project.git'
     targetRevision: main             # Tracks the main branch of your Git repository
-    path: argocd-setup              # The directory inside your repository containing the manifests (old-argocd-apps)
+    path: argocd-setup              # The directory inside your repository containing the manifests 
   
   destination:
     # ----------------------------------------------------------------------------------
