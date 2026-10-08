@@ -6,20 +6,20 @@ kind: ConfigMap
 metadata:
   labels:
     app.kubernetes.io/component: server
-    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/name: argocd-rbac-cm
     app.kubernetes.io/part-of: argocd
-  name: argocd-cm
+  name: argocd-rbac-cm
   namespace: argocd
 
 # ==============================================================================
-# SECTION 2: CORE SERVER CONFIGURATION & RESOURCE CUSTOMIZATIONS
+# SECTION 2: RBAC ANONYMOUS ADMIN POLICY CONFIGURATION
 # ==============================================================================
 data:
-  admin.enabled: "true"
-  users.anonymous.enabled: "true"
-  server.insecure: "true"
-  
-  # FIXED: Instructs ArgoCD to ignore the schema validation error for terminatingReplicas field globally
-  resource.customizations.ignoreDifferences.apps_Deployment: |
-    jsonPointers:
-    - /status/terminatingReplicas
+  # Sets the default policy role for anyone accessing the UI without logging in
+  policy.default: role:admin
+  # Grants full cluster-wide administrative access to the anonymous role
+  policy.csv: |
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, projects, *, *, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, repositories, *, *, allow
