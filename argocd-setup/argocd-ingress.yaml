@@ -1,25 +1,40 @@
-# ======================================================================================
-# KUBERNETES INGRESS MANIFEST: NATIVE TRAEFIK DOMAIN ROUTING FOR INSECURE ARGOCD APPS
-# ======================================================================================
+# ==============================================================================
+# SECTION 1: METADATA & INGRESS CONTROLLER ANNOTATIONS
+# ==============================================================================
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  # The unique routing rule name for accessing the Argo CD dashboard
   name: argocd-server-ingress
   namespace: argocd
+  annotations:
+    # CRITICAL: Tells the Ingress Controller to pass encrypted HTTPS traffic directly without altering it
+    ingress.kubernetes.io/ssl-passthrough: "true"
+    # CRITICAL: Forces the internal proxy layer to communicate with the Argo server using secure SSL (HTTPS)
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+
+# ==============================================================================
+# SECTION 2: TRAFFIC ROUTING RULES & BACKEND TARGETS
+# ==============================================================================
 spec:
-  # Instructs the native MicroK8s Traefik ingress class to automatically route this configuration
+  # Binds this routing definition to the native MicroK8s Traefik ingress controller class
   ingressClassName: public
   rules:
+    # The local domain map entry defined in your host machine file
   - host: argocd.local
     http:
       paths:
+        # Catches and forwards all web traffic starting from the root domain slash
       - path: /
         pathType: Prefix
         backend:
           service:
+            # The internal cluster network service that exposes the Argo UI pods
             name: argocd-server
             port:
-              # Routes traffic directly through the standard plain-text web engine port mapping
-              number: 80
+              # FIXED: Changed from 80 to 443 to bypass the infinite loop and prevent browser connection drops
+              number: 443
+
+
 
      
