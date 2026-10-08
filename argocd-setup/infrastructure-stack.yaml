@@ -1,6 +1,6 @@
-# ==============================================================================
+## ==============================================================================
 # SECTION 1: METADATA & TYPE DEFINITION 
-# ==============================================================================
+## ==============================================================================
 
 # Specifies the API group and version for Argo CD custom resources
 apiVersion: argoproj.io/v1alpha1
@@ -12,32 +12,32 @@ metadata:
   # Specifies the namespace where the Argo CD controller engine runs
   namespace: argocd
 
-# ==============================================================================
-# SOURCE CONFIGURATION: POINTING DIRECTLY TO YOUR PRIVATE GITHUB REPOSITORY
-# ==============================================================================
+## ==============================================================================
+# SOURCE CONFIGURATION: POINTING TO THE OFFICIAL HELM REGISTRY (FIXED)
+## ==============================================================================
 spec:
   # Assigns this application to the default project permissions block
   project: default
   source:
     # Target URL of the official Prometheus community Helm charts registry
-    repoURL: 'https://github.com/elirangz1-creator/my-k8s-monitoring-project.git'
+    repoURL: 'https://github.io'
     # Name of the specific Helm chart package to be pulled and managed
     chart: kube-prometheus-stack
     # Locks the chart installation version to the stable 65 major release line
     targetRevision: 65.x.x
 
-# ==============================================================================
+## ==============================================================================
 #  DESTINATION CONFIGURATION: WHERE TO DEPLOY THE RESOURCES
-# ==============================================================================
+## ==============================================================================
   destination:
     # Points the installation target to the local API endpoint of the host cluster
     server: 'https://kubernetes.default.svc'
     # The dedicated and isolated namespace where monitoring pods will be deployed
     namespace: monitoring
 
-# ==============================================================================
+## ==============================================================================
 # SECTION 4: AUTOMATION & CONFLICT POLICIES
-# ==============================================================================
+## ==============================================================================
   syncPolicy:
     # Instructs Argo CD to automatically generate the namespace if it is missing
     createNamespace: true
