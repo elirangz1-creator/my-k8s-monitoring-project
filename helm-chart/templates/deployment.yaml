@@ -5,7 +5,7 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
 spec:
-  replicas: {{ .Values.replicaCount }} # מושך את כמות הרפליקות דינמית
+  replicas: {{ .Values.replicaCount }} # pulls the amount of dinamic replicats
   selector:
     matchLabels:
       app: {{ .Chart.Name }}
@@ -14,18 +14,18 @@ spec:
       labels:
         app: {{ .Chart.Name }}
       annotations:
-        # הגדרה המאפשרת ל-Prometheus לזהות ולגרד (Scrape) את ה-Metrics של Flask אוטומטית!
+                                             # Allows flask to identify prometheus metrics  
         prometheus.io/scrape: "true"
         prometheus.io/port: "5000"
         prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}" # מושך את ה-Image מה-Values
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}" # PULLS the values from the image
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
-        - containerPort: 5000 # הפורט של אפליקציית הפייתון שלך
-        # הגדרת בדיקת תקינות המבוססת על ה-Health Check שכתבת בקוד
+        - containerPort: 5000 # my python port
+                                                   # -Health Check  defenition based on app code 
         livenessProbe:
           httpGet:
             path: /health

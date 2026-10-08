@@ -39,7 +39,6 @@ metadata:
   name: argocd-rbac-cm
   namespace: argocd
 data:
-  # FIXED: משתמשים בשם המערכת הרשמי role:anonymous ומעניקים לו הרשאת admin גלובלית
   policy.default: role:anonymous
   policy.csv: |
     p, role:anonymous, applications, *, */*, allow

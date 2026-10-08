@@ -5,9 +5,9 @@ metadata:
   labels:
     app: {{ .Chart.Name }}
 spec:
-  type: {{ .Values.service.type }} # ישתמש ב-ClusterIP כברירת מחדל
+  type: {{ .Values.service.type }} #  -ClusterIP use defualt
   ports:
-  - port: {{ .Values.service.port }} # פורט 5000
+  - port: {{ .Values.service.port }} # port 5000
     targetPort: 5000
     protocol: TCP
   selector:
