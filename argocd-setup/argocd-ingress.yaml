@@ -8,10 +8,9 @@ metadata:
   name: argocd-server-ingress
   namespace: argocd
   annotations:
-    # CRITICAL: Tells the Ingress Controller to pass encrypted HTTPS traffic directly without altering it
-    ingress.kubernetes.io/ssl-passthrough: "true"
-    # CRITICAL: Forces the internal proxy layer to communicate with the Argo server using secure SSL (HTTPS)
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # CRITICAL FOR MICROK8S: Tells Traefik to trust the self-signed SSL certificate of ArgoCD server
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/service.serversscheme: "https"
 
 # ==============================================================================
 # SECTION 2: TRAFFIC ROUTING RULES & BACKEND TARGETS
@@ -32,8 +31,9 @@ spec:
             # The internal cluster network service that exposes the Argo UI pods
             name: argocd-server
             port:
-              # FIXED: Changed from 80 to 443 to bypass the infinite loop and prevent browser connection drops
+              # Connects directly to ArgoCD secure HTTPS port
               number: 443
+
 
 
 
