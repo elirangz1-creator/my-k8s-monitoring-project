@@ -1,4 +1,4 @@
-# ======================================================================================
+# =====================================================================================
 # ARGOCD APPLICATION MANIFEST: INFRASTRUCTURE MONITORING STACK (PROMETHEUS & GRAFANA)
 # ======================================================================================
 apiVersion: argoproj.io/v1alpha1     # Core ArgoCD API version for managing Applications
