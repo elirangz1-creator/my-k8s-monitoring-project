@@ -8,15 +8,17 @@ metadata:
   name: argocd-server-ingress
   namespace: argocd
   annotations:
-    # CRITICAL FOR MICROK8S: Tells Traefik to trust the self-signed SSL certificate of ArgoCD server
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/service.serversscheme: "https"
+    # NGINX Configuration: Prevents infinite HTTPS redirect loops
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # TRAEFIK Configuration: Forces standard HTTP backend routing
+    traefik.ingress.kubernetes.io/service.serversscheme: "http"
 
 # ==============================================================================
 # SECTION 2: TRAFFIC ROUTING RULES & BACKEND TARGETS
 # ==============================================================================
 spec:
-  # Binds this routing definition to the native MicroK8s Traefik ingress controller class
+  # Binds this routing definition to the native MicroK8s ingress controller class
   ingressClassName: public
   rules:
     # The local domain map entry defined in your host machine file
@@ -31,8 +33,9 @@ spec:
             # The internal cluster network service that exposes the Argo UI pods
             name: argocd-server
             port:
-              # Connects directly to ArgoCD secure HTTPS port
-              number: 443
+              # Routes traffic directly through the plain-text web engine port mapping
+              number: 80
+
 
 
 

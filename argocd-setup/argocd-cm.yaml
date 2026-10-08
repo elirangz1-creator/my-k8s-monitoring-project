@@ -8,9 +8,7 @@ metadata:
     app.kubernetes.io/component: server
     app.kubernetes.io/name: argocd-cm
     app.kubernetes.io/part-of: argocd
-  # The core configuration object name for Argo CD settings
   name: argocd-cm
-  # Must be deployed in the same namespace where Argo CD engine runs
   namespace: argocd
 
 # ==============================================================================
@@ -21,3 +19,6 @@ data:
   admin.enabled: "true"
   # Allows the UI to load automatically without forcing a manual username/password login screen
   users.anonymous.enabled: "true"
+  # CRITICAL FIXED: Tells ArgoCD server to accept unencrypted HTTP requests from the Ingress proxy
+  server.insecure: "true"
+
