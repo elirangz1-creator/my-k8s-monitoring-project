@@ -1,36 +1,53 @@
-# =====================================================================================
-# ARGOCD APPLICATION MANIFEST: INFRASTRUCTURE MONITORING STACK (PROMETHEUS & GRAFANA)
-# ======================================================================================
-apiVersion: argoproj.io/v1alpha1     # Core ArgoCD API version for managing Applications
-kind: Application                    # Defines this resource type as an ArgoCD Application
-metadata:
-  name: kube-prometheus-stack        # The unique name of the application in the ArgoCD UI
-  namespace: argocd                  # The namespace where the ArgoCD controller is running
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io # Ensures clean cascading deletion of sub-resources
-spec:
-  project: default                   # Assigns the application to the default ArgoCD project
-  source:
-    # ----------------------------------------------------------------------------------
-    # 🔗 SOURCE CONFIGURATION: POINTING DIRECTLY TO YOUR PRIVATE GITHUB REPOSITORY
-    # ----------------------------------------------------------------------------------
-    repoURL: 'https://github.com/elirangz1-creator/my-k8s-monitoring-project.git'
-    targetRevision: main             # Tracks the main branch of your Git repository
-    path: argocd-setup              # The directory inside your repository containing the manifests 
-  
-  destination:
-    # ----------------------------------------------------------------------------------
-    # 🎯 DESTINATION CONFIGURATION: WHERE TO DEPLOY THE RESOURCES
-    # ----------------------------------------------------------------------------------
-    server: 'https://kubernetes.default.svc' # Target fully-qualified core cluster internal API server endpoint
-    namespace: monitoring                     # The target isolated namespace where the components are deployed
-  
-  syncPolicy:
-    # ----------------------------------------------------------------------------------
-    # 🔄 AUTOMATION AND SYNCHRONIZATION POLICIES (GitOps)
-    # ----------------------------------------------------------------------------------
-    createNamespace: true            # Tells ArgoCD to automatically generate the 'monitoring' namespace if missing
-    automated:
-      prune: true                    # Automatically removes deleted components from the cluster if removed from Git
-      selfHeal: true                 # Automatically overrides drift changes made inside the cluster back to the Git state
+# ==============================================================================
+# SECTION 1: METADATA & TYPE DEFINITION 
+# ==============================================================================
 
+# Specifies the API group and version for Argo CD custom resources
+apiVersion: argoproj.io/v1alpha1
+# Defines the type of Kubernetes resource being created
+kind: Application
+metadata:
+  # The visible name of this application deployment within Argo CD
+  name: kube-prometheus-stack
+  # Specifies the namespace where the Argo CD controller engine runs
+  namespace: argocd
+
+# ==============================================================================
+# SOURCE CONFIGURATION: POINTING DIRECTLY TO YOUR PRIVATE GITHUB REPOSITORY
+# ==============================================================================
+spec:
+  # Assigns this application to the default project permissions block
+  project: default
+  source:
+    # Target URL of the official Prometheus community Helm charts registry
+    repoURL: 'https://github.com/elirangz1-creator/my-k8s-monitoring-project.git'
+    # Name of the specific Helm chart package to be pulled and managed
+    chart: kube-prometheus-stack
+    # Locks the chart installation version to the stable 65 major release line
+    targetRevision: 65.x.x
+
+# ==============================================================================
+#  DESTINATION CONFIGURATION: WHERE TO DEPLOY THE RESOURCES
+# ==============================================================================
+  destination:
+    # Points the installation target to the local API endpoint of the host cluster
+    server: 'https://kubernetes.default.svc'
+    # The dedicated and isolated namespace where monitoring pods will be deployed
+    namespace: monitoring
+
+# ==============================================================================
+# SECTION 4: AUTOMATION & CONFLICT POLICIES
+# ==============================================================================
+  syncPolicy:
+    # Instructs Argo CD to automatically generate the namespace if it is missing
+    createNamespace: true
+    automated:
+      # Automatically destroys resources in the cluster if they are deleted from Git
+      prune: true
+      # Automatically fixes and overwrites manual cluster changes to match Git state
+      selfHeal: true
+    syncOptions:
+      # Confirms namespace creation priority during the initial sync phase
+      - CreateNamespace=true
+      # Critical flag that bypasses metadata conflicts and forces server-side field parsing
+      - ServerSideApply=true
