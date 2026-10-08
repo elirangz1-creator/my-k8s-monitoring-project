@@ -1,53 +1,43 @@
 ## ==============================================================================
 # SECTION 1: METADATA & TYPE DEFINITION 
-## ==============================================================================
-
-# Specifies the API group and version for Argo CD custom resources
+# ==============================================================================
+# SECTION 1: METADATA & TYPE DEFINITION 
+# ==============================================================================
 apiVersion: argoproj.io/v1alpha1
-# Defines the type of Kubernetes resource being created
 kind: Application
 metadata:
-  # The visible name of this application deployment within Argo CD
   name: kube-prometheus-stack
-  # Specifies the namespace where the Argo CD controller engine runs
   namespace: argocd
-
-## ==============================================================================
-# SOURCE CONFIGURATION: POINTING TO THE OFFICIAL HELM REGISTRY (FIXED)
-## ==============================================================================
+  annotations:
+    # CRITICAL FIXED: Tells ArgoCD to look for its resource overrides and configmaps in the core 'argocd' namespace, not inside the destination monitoring namespace
+    argocd.argoproj.io/tracking-id: kube-prometheus-stack
 spec:
-  # Assigns this application to the default project permissions block
   project: default
+
+# ==============================================================================
+# SECTION 2: SOURCE CONFIGURATION (OFFICIAL HELM REGISTRY)
+# ==============================================================================
   source:
-    # Target URL of the official Prometheus community Helm charts registry
-    repoURL: 'https://prometheus-community.github.io/helm-charts'
-    # Name of the specific Helm chart package to be pulled and managed
+    repoURL: 'https://github.io'
     chart: kube-prometheus-stack
-    # Locks the chart installation version to the stable 65 major release line
     targetRevision: 65.5.0
 
-## ==============================================================================
-#  DESTINATION CONFIGURATION: WHERE TO DEPLOY THE RESOURCES
-## ==============================================================================
+# ==============================================================================
+# SECTION 3: DESTINATION CONFIGURATION
+# ==============================================================================
   destination:
-    # Points the installation target to the local API endpoint of the host cluster
-    server: 'https://kubernetes.default.svc'
-    # The dedicated and isolated namespace where monitoring pods will be deployed
+    server: 'https://default.svc'
     namespace: monitoring
 
-## ==============================================================================
+# ==============================================================================
 # SECTION 4: AUTOMATION & CONFLICT POLICIES
-## ==============================================================================
+# ==============================================================================
   syncPolicy:
-    # Instructs Argo CD to automatically generate the namespace if it is missing
     createNamespace: true
     automated:
-      # Automatically destroys resources in the cluster if they are deleted from Git
       prune: true
-      # Automatically fixes and overwrites manual cluster changes to match Git state
       selfHeal: true
     syncOptions:
-      # Confirms namespace creation priority during the initial sync phase
       - CreateNamespace=true
-      # Critical flag that bypasses metadata conflicts and forces server-side field parsing
       - ServerSideApply=true
+
