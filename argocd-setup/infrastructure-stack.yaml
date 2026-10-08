@@ -18,7 +18,7 @@ spec:
 # SECTION 2: SOURCE CONFIGURATION (OFFICIAL HELM REGISTRY)
 # ==============================================================================
   source:
-    repoURL: 'https://github.io'
+    repoURL: 'https://prometheus-community.github.io/helm-charts'
     chart: kube-prometheus-stack
     targetRevision: 65.5.0
 
@@ -26,7 +26,7 @@ spec:
 # SECTION 3: DESTINATION CONFIGURATION
 # ==============================================================================
   destination:
-    server: 'https://default.svc'
+    server: 'https://kubernetes.default.svc'
     namespace: monitoring
 
 # ==============================================================================
