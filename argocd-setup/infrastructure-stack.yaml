@@ -20,11 +20,11 @@ spec:
   project: default
   source:
     # Target URL of the official Prometheus community Helm charts registry
-    repoURL: 'https://githubusercontent.com'
+    repoURL: 'https://prometheus-community.github.io/helm-charts'
     # Name of the specific Helm chart package to be pulled and managed
     chart: kube-prometheus-stack
     # Locks the chart installation version to the stable 65 major release line
-    targetRevision: 65.x.x
+    targetRevision: 65.5.0
 
 ## ==============================================================================
 #  DESTINATION CONFIGURATION: WHERE TO DEPLOY THE RESOURCES
