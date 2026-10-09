@@ -35,18 +35,18 @@ my-k8s-monitoring-project/
 
 ## ⚙️ Core Components Overview
 
-### 1. Application Layer (`app.py` & `Dockerfile`)
-* **`app.py`**: A lightweight Python Flask backend exposing three distinct endpoints:
+### 1. Application Layer (app.py & Dockerfile)
+* **app.py**: A lightweight Python Flask backend exposing three distinct endpoints:
   * `/generate`: Dynamically generates secure, randomized passwords.
   * `/health`: Health check endpoint utilized by the Kubernetes cluster layer (`livenessProbe`).
   * `/metrics`: Exposes key application performance metrics natively in Prometheus format.
-* **`Dockerfile`**: Packages the source code into a secure, minimal container utilizing `python:3.9-slim`.
+* **Dockerfile**: Packages the source code into a secure, minimal container utilizing `python:3.9-slim`.
 
-### 2. Templating Layer (`helm-chart/`)
+### 2. Templating Layer (helm-chart/)
 Standardizes Kubernetes deployment specifications to handle multiple target environments seamlessly.
 * The `deployment.yaml` template includes native Prometheus scraping annotations (`prometheus.io/scrape: "true"`). This instructs the cluster's Prometheus server to automatically discover and scrape application metrics upon startup.
 
-### 3. Continuous Delivery Layer (`environments/` & `argocd-setup/`)
+### 3. Continuous Delivery Layer (environments/ & argocd-setup/)
 Implements strict GitOps principles utilizing **Argo CD**. Manual terminal-based cluster changes are eliminated; the remote GitHub repository serves as the absolute **Source of Truth**.
 * The `argo-password-api-dev.yaml` controller monitors your repository, pulls the generic Helm Chart, injects the `values-dev.yaml` configuration overrides, and syncs the desired state into the isolated `dev-apps` namespace.
 
@@ -61,6 +61,7 @@ Implements strict GitOps principles utilizing **Argo CD**. Manual terminal-based
 
 ### 🛠️ Step 1: Initialize Infrastructure & Permissions (One-Time Setup)
 To allow Argo CD to manage cluster resources globally and initialize custom security objects, run the following:
+
 ```bash
 # 1. Grant global cluster-admin permissions to the Argo CD controller layer
 microk8s kubectl apply -f argocd-admin-rights.yaml
@@ -74,6 +75,7 @@ microk8s kubectl apply -f argocd-setup/argocd-rbac-bypass.yaml
 
 ### 🐳 Step 2: Build and Push the Application Image
 The Kubernetes nodes need to pull the application from your local MicroK8s container registry listening on port 32000:
+
 ```bash
 docker build -t localhost:32000/password-api:1.0.0 .
 docker push localhost:32000/password-api:1.0.0
@@ -81,6 +83,7 @@ docker push localhost:32000/password-api:1.0.0
 
 ### 🤖 Step 3: Sync to GitHub & Trigger GitOps Engine
 Argo CD evaluates the state of the live cluster exclusively against the code pushed to GitHub. Sync your local commits to your main branch:
+
 ```bash
 git add .
 git commit -m "deploy: infrastructure and helm setup ready"
@@ -88,6 +91,7 @@ git push origin main
 ```
 
 Now, create the required environments and trigger the deployment apps:
+
 ```bash
 # 1. Create target isolated namespaces
 microk8s kubectl create namespace dev-apps
@@ -106,5 +110,126 @@ microk8s kubectl apply -f argocd-setup/infrastructure-stack.yaml
    ```bash
    microk8s kubectl get pods -n dev-apps
    ```
-2. **Access the GitOps dashboard:** Open your browser and navigate to [http://argocd.local](http://argocd.local). Both applications (`password-api-dev` and `kube-prometheus-stack`) will be displayed as fully synchronized and operating normally (**`Synced` & `Healthy`**).
+2. **Access the GitOps dashboard:** Open your browser and navigate to http://argocd.local. Both applications (`password-api-dev` and `kube-prometheus-stack`) will be displayed as fully synchronized and operating normally (**Synced & Healthy**).
 3. **Day-to-Day Lifecycle Workflow:** From this point forward, any architectural modification—such as scaling out replica counts, modifying ingress hosts, or upgrading server configurations—is executed solely by updating the codebase on GitHub. Argo CD will instantly detect the structural variance and reconcile your live cluster automatically within seconds.
+
+---
+
+## 🪐 Project Architecture & GitOps Framework
+
+This project leverages the advanced **App of Apps** pattern combined with declarative GitOps patterns via Argo CD to maintain a reliable system state inside the MicroK8s environment.
+
+### 📐 Declarative Architecture: The "App of Apps" Pattern
+
+To avoid manual deployments and achieve true multi-application synchronization, we implemented a single **Bootstrap (or Umbrella) Application**.
+
+```text
+                       [ Private GitHub Repository ]
+                                     │
+                                     ▼
+                        ┌────────────────────────┐
+                        │  Root App of Apps      │
+                        │ (App Control Registry) │
+                        └────────────┬───────────┘
+                                     │
+                     ┌───────────────┴───────────────┐
+                     ▼                               ▼
+       ┌──────────────────────────┐    ┌──────────────────────────┐
+       │   kube-prometheus-stack  │    │     password-api-dev     │
+       │ (Official Helm Registry) │    │  (Custom Flask Payload)  │
+       └──────────────────────────┘    └──────────────────────────┘
+```
+
+#### How it works:
+1. **The Root Application:** Argo CD monitors a dedicated deployment directory (`argocd-setup/`). This directory contains the configuration manifests for other applications.
+2. **Child Application Discovery:** When a new `Application` file (like `infrastructure-stack.yaml` or `password-api-dev.yaml`) is pushed to Git, the Root Application automatically detects it.
+3. **Decoupled Sourcing:** This allows us to handle multi-source tracking smoothly:
+   * **kube-prometheus-stack** fetches directly from the official Prometheus community Helm charts registry.
+   * **password-api-dev** acts as our custom local workspace payload, driving custom internal Flask logic.
+4. **Self-Healing & Pruning:** Automated policies are configured (`selfHeal: true`, `prune: true`) to actively overwrite any manual overrides made inside the cluster, ensuring Git remains the absolute **Source of Truth**.
+
+---
+
+## 🛠️ MicroK8s (m8k) Core Operations Cheat Sheet
+
+This section documents the essential maintenance, networking, and cluster infrastructure commands utilized during the development, stabilization, and deployment phases of the monitoring architecture.
+
+### 1. Cluster Lifecycle Management
+Commands used to control, verify, and initialize the local Kubernetes server workspace.
+
+```bash
+# Check the overall health of the cluster and verify which add-ons are enabled
+microk8s status --wait-ready
+
+# Safely shut down all core Kubernetes services running on your host machine
+microk8s stop
+
+# Fire up the local Kubernetes infrastructure and initialize running components
+microk8s start
+
+# Force a complete system restart of the MicroK8s container runtime engine layers
+sudo snap restart microk8s
+```
+
+### 2. Network & Core Infrastructure Services
+Internal networking tools applied to resolve domain resolution blocks and reset invalid localized node tokens.
+
+```bash
+# Enable the internal DNS server to allow Pods to resolve domain names and access the internet
+microk8s enable dns
+
+# RECOVERY: Regenerate dynamic TLS certs to sync with your machine's updated local IP address
+sudo microk8s refresh-certs --cert server.crt
+```
+
+### 3. Resource Inspection & Discovery
+Telemetry queries to audit running workloads, evaluate environmental errors, and inspect local routing components.
+
+```bash
+# List all active system nodes and confirm if the host computer is in 'Ready' status
+microk8s kubectl get nodes
+
+# Audit every single pod running across all namespaces to check for errors or crashes
+microk8s kubectl get pods -A
+
+# Fetch all operational internal network discovery endpoints inside the monitoring workspace
+microk8s kubectl get svc -n monitoring
+
+# Permanently destroy an expired or misconfigured test pod by its specific resource handle
+microk8s kubectl delete pod busybox -n default
+```
+
+### 4. Application Rollout & Declarative GitOps
+Declarative manifest commands used to enforce configuration overrides and sync state updates.
+
+```bash
+# Deploy or update target structural manifests from your local directory configuration
+microk8s kubectl apply -f argocd-setup/argocd-ingress.yaml
+
+# Hard-reset an operational controller to force-wipe its cache and read updated variables
+microk8s kubectl rollout restart deployment/argocd-server -n argocd
+```
+
+### 5. Troubleshooting & Diagnostics
+Direct pipeline logs used to inspect low-level operational crashes within isolated namespaces.
+
+```bash
+# Stream the last 50 telemetry log entries from a specific infrastructure container engine
+microk8s kubectl logs -n argocd deployment/argocd-repo-server --tail=50
+```
+
+### 🔐 6. Target Administrative Credential Reset (Template)
+Safe structural block used to securely bootstrap credentials manually when programmatic API channels are blocked by TLS restrictions.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-secret
+  namespace: argocd
+type: Opaque
+data:
+  # CRITICAL: Replace the placeholder string below with your securely generated Base64 password hash
+  admin.password: <YOUR_BASE64_HASHED_PASSWORD>
+  admin.passwordMtime: MjAyNi0xMC0wOVQwMzowMjowMFo=
+```
