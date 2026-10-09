@@ -52,15 +52,22 @@ Implements strict GitOps principles utilizing **Argo CD**. Manual terminal-based
 
 ---
 
-## 🚀 Deployment Guide
+## 🚀 Deployment Guide for External Users (How to Run This Project)
+
+If you have cloned or forked this repository, follow these quick adjustment steps to spin up the entire cluster engine, GitOps UI, and monitoring stack on your local MicroK8s environment.
 
 ### 📌 Prerequisites
-* An active **MicroK8s** local cluster.
+* An active **MicroK8s** local cluster installed on your machine.
 * Core MicroK8s add-ons enabled: `dns`, `ingress`, `registry`.
 * Local `kubectl` CLI context configured to connect to your cluster.
 
-### 🛠️ Step 1: Initialize Infrastructure & Permissions (One-Time Setup)
-To allow Argo CD to manage cluster resources globally and initialize custom security objects, run the following:
+### 🛠️ Step 1: Adjust the Git Source of Truth (Crucial)
+Because Argo CD pulls blueprints directly from Git, you must point the Umbrella manifests to your own repository clone:
+1. Open `argocd-setup/infrastructure-stack.yaml` and change the `repoURL` value to match your GitHub repository URL.
+2. Open `argocd-setup/argo-password-api-dev.yaml` (or your custom application manifest) and update its `repoURL` to match your repository as well.
+
+### 🛠️ Step 2: Initialize Infrastructure & Permissions
+Execute the bootstrapping sequence to grant cluster roles to Argo CD and set up web entry routes:
 
 ```bash
 # 1. Grant global cluster-admin permissions to the Argo CD controller layer
@@ -73,45 +80,54 @@ microk8s kubectl apply -f argocd-setup/argocd-cm.yaml
 microk8s kubectl apply -f argocd-setup/argocd-rbac-bypass.yaml
 ```
 
-### 🐳 Step 2: Build and Push the Application Image
-The Kubernetes nodes need to pull the application from your local MicroK8s container registry listening on port 32000:
+### 🐳 Step 3: Build and Push the Application Image Locally
+Build your custom Python Flask API payload and push it directly into your local MicroK8s container registry listening on port 32000:
 
 ```bash
+# Build the local container recipe
 docker build -t localhost:32000/password-api:1.0.0 .
+
+# Push the compiled image into the microk8s registry pool
 docker push localhost:32000/password-api:1.0.0
 ```
 
-### 🤖 Step 3: Sync to GitHub & Trigger GitOps Engine
-Argo CD evaluates the state of the live cluster exclusively against the code pushed to GitHub. Sync your local commits to your main branch:
+### 🤖 Step 4: Sync Changes to Git & Trigger Deployment
+Commit your localized repository updates (`repoURL` adjustments) and push them to your remote repository branch so the GitOps controller can parse them:
 
 ```bash
 git add .
-git commit -m "deploy: infrastructure and helm setup ready"
+git commit -m "deploy: localized infrastructure repository targets"
 git push origin main
 ```
 
-Now, create the required environments and trigger the deployment apps:
+Now, create the required target cluster namespaces and trigger the Root Application deployment:
 
 ```bash
 # 1. Create target isolated namespaces
 microk8s kubectl create namespace dev-apps
 microk8s kubectl create namespace monitoring
 
-# 2. Apply the application deployment manifests to the cluster
+# 2. Apply the deployment manifests to activate the GitOps pipeline engine
 microk8s kubectl apply -f argocd-setup/argo-password-api-dev.yaml
 microk8s kubectl apply -f argocd-setup/infrastructure-stack.yaml
 ```
 
 ---
 
-## 📊 Verification & Workflow
+## 📊 Verification & Local Domain Access
 
-1. **Verify Pod Status via CLI:**
-   ```bash
-   microk8s kubectl get pods -n dev-apps
-   ```
-2. **Access the GitOps dashboard:** Open your browser and navigate to http://argocd.local. Both applications (`password-api-dev` and `kube-prometheus-stack`) will be displayed as fully synchronized and operating normally (**Synced & Healthy**).
-3. **Day-to-Day Lifecycle Workflow:** From this point forward, any architectural modification—such as scaling out replica counts, modifying ingress hosts, or upgrading server configurations—is executed solely by updating the codebase on GitHub. Argo CD will instantly detect the structural variance and reconcile your live cluster automatically within seconds.
+### 1. Configure Local DNS Resolution (Hosts File)
+To route web traffic from your browser to the local cluster controllers, add the following mappings to your local operating system `/etc/hosts` (Linux/Mac) or `C:\Windows\System32\drivers\etc\hosts` (Windows) file:
+
+```text
+# Replace 127.0.0.1 with your microk8s node IP address if running on a remote VM
+127.0.0.1 argocd.local
+127.0.0.1 grafana.local
+```
+
+### 2. Verify Workloads
+* **Argo CD UI Dashboard:** Open your web browser and navigate to `http://argocd.local`. The system operates under secure anonymous administrative permissions for seamless local testing.
+* **Grafana Telemetry Metrics:** Navigate to `http://grafana.local` to view native infrastructure metric graphs. (Default admin login: `admin` / `prom-operator`).
 
 ---
 
@@ -149,7 +165,6 @@ To avoid manual deployments and achieve true multi-application synchronization, 
 4. **Self-Healing & Pruning:** Automated policies are configured (`selfHeal: true`, `prune: true`) to actively overwrite any manual overrides made inside the cluster, ensuring Git remains the absolute **Source of Truth**.
 
 ---
-
 ## 🛠️ MicroK8s (m8k) Core Operations Cheat Sheet
 
 This section documents the essential maintenance, networking, and cluster infrastructure commands utilized during the development, stabilization, and deployment phases of the monitoring architecture.
@@ -207,7 +222,7 @@ Declarative manifest commands used to enforce configuration overrides and sync s
 microk8s kubectl apply -f argocd-setup/argocd-ingress.yaml
 
 # Hard-reset an operational controller to force-wipe its cache and read updated variables
-microk8s kubectl rollout restart deployment/argocd-server -n argocd
+microk8s rollout restart deployment/argocd-server -n argocd
 ```
 
 ### 5. Troubleshooting & Diagnostics
@@ -215,7 +230,7 @@ Direct pipeline logs used to inspect low-level operational crashes within isolat
 
 ```bash
 # Stream the last 50 telemetry log entries from a specific infrastructure container engine
-microk8s kubectl logs -n argocd deployment/argocd-repo-server --tail=50
+microk8s logs -n argocd deployment/argocd-repo-server --tail=50
 ```
 
 ### 🔐 6. Target Administrative Credential Reset (Template)
