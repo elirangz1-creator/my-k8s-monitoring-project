@@ -248,6 +248,7 @@ data:
   admin.password: <YOUR_BASE64_HASHED_PASSWORD>
   admin.passwordMtime: MjAyNi0xMC0wOVQwMzowMjowMFo=
 ```
- ![Argo CD Dashboard](argo-dashboard.png)
+<img width="1095" height="531" alt="2026-10-10_ArgoCD" src="https://github.com/user-attachments/assets/218329b5-896e-4bfc-8c84-2d04c2b60dba" />
+
 
 ```
