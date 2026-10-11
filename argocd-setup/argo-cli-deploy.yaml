@@ -1,0 +1,27 @@
+# ==============================================================================
+# ARGO CD CLI APPLICATION SPECIFICATION (SIMULATED VIA DECLARATIVE CONFIG)
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: password-api-cli-deploy
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/elirangz1-creator/my-k8s-monitoring-project.git
+    targetRevision: main
+    path: helm-chart
+    helm:
+      valueFiles:
+      - ../environments/Dev/values-dev.yaml
+      parameters:
+      - name: fullnameOverride
+        value: password-api-cli
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: cli-apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
