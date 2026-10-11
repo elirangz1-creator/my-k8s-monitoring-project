@@ -80,16 +80,13 @@ microk8s kubectl apply -f argocd-setup/argocd-cm.yaml
 microk8s kubectl apply -f argocd-setup/argocd-rbac-bypass.yaml
 ```
 
-### 🐳 Step 3: Build and Push the Application Image Locally
-Build your custom Python Flask API payload and push it directly into your local MicroK8s container registry listening on port 32000:
+### 🐳 Step 3: Verify the Public Application Image
+The architecture has been modernized to eliminate local registry build dependencies. The application is natively pre-compiled and fetched directly from the official public Docker Hub repository:
 
-```bash
-# Build the local container recipe
-docker build -t localhost:32000/password-api:1.0.0 .
+Repository Target: aaber/pass_gen_metrics_health:latest
 
-# Push the compiled image into the microk8s registry pool
-docker push localhost:32000/password-api:1.0.0
-```
+Kubernetes dynamically triggers an internet pull downstream upon synchronization. No local 'docker build' or port 32000 registry overrides are required on the host system.
+
 
 ### 🤖 Step 4: Sync Changes to Git & Trigger Deployment
 Commit your localized repository updates (`repoURL` adjustments) and push them to your remote repository branch so the GitOps controller can parse them:
